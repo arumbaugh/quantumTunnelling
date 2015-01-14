@@ -52,3 +52,17 @@ listtothin = function(inlist)
   colnames(m)=c("","")
   m[-1,]
 }
+
+# thin to square
+thintosquare <- function(thin,nvert) {
+    # create the return matrix
+    matrix <- matrix(rep(0,nvert*nvert),nrow = nvert,ncol = nvert);
+    
+    # iterate through rows
+    for(row in 1:nrow(thin)) {
+        # get edge
+        matrix[thin[row,1],thin[row,2]] <- 1;
+    }
+    
+    return(matrix);
+}
