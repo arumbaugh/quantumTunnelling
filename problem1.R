@@ -31,12 +31,7 @@ squaretothin = function(m)
 
 thintolist = function(thin,nvert)
 {
-  x = vector("list", nvert)
-  for(i in 1:nrow(thin))
-  {
-    
-  }
-  
+  squaretolist(thintosquare(thin,nvert)) 
 }
 
 listtothin = function(inlist)
@@ -51,6 +46,11 @@ listtothin = function(inlist)
   }
   colnames(m)=c("","")
   m[-1,]
+}
+
+listtosquare = function(inlist)
+{
+  thintosquare(listtothin(inlist),length(inlist))
 }
 
 # thin to square
