@@ -16,6 +16,7 @@ using namespace std;
 
 int* numcount(int *x, int n, int m);
 
+/*
 int main( int argc, const char* argv[] ) {
   printf( "\nStarting...\n");
 
@@ -27,6 +28,7 @@ int main( int argc, const char* argv[] ) {
 
   return(0);
 }
+*/
 
 string keyFromArray(int* array,int length);
 
