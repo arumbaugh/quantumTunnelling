@@ -11,24 +11,29 @@
 #include <sstream>
 #include <iostream>
 #include <iterator>
+#include <time.h>
 
 using namespace std;
 
 int* numcount(int *x, int n, int m);
 
-/*
+
 int main( int argc, const char* argv[] ) {
+  srand (time(NULL));  
+
   printf( "\nStarting...\n");
 
   int* x = new int[16];
-  for(int i = 0 ; i < 16 ; i++)
-    x[i] = i%5;
+  int n = atoi(argv[1]);
+  int m = atoi(argv[2]);
+  for(int i = 0 ; i < n ; i++)
+    x[i] = rand() % 101;
 
-  numcount(x,16,3);
+  numcount(x,n,m);
 
   return(0);
 }
-*/
+
 
 string keyFromArray(int* array,int length);
 
