@@ -63,12 +63,11 @@ int *numcount(int *x, int n, int m) {
     {
       printf("Num threads = %d\n", numThreads);
     }
-    int maxSubsequenceIndex = (((n - 1) - offset) / numThreads);  
-
     // Iterate through all subsequences
-    for(int subsequenceIndex = 0 ; subsequenceIndex < maxSubsequenceIndex ; subsequenceIndex++) {
+    #pragma omp for
+    for(int i = 0 ; i < n-m+1 ; i++) {
       // Convert the subsequence of integers to a string **vomit**
-      string subsequence = keyFromArray(&(x[(subsequenceIndex*numThreads)+offset]),m);
+      string subsequence = keyFromArray(&(x[i]),m);
 
       // Don't write without starting a critical section
       #pragma omp critical
