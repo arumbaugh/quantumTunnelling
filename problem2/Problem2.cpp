@@ -20,7 +20,8 @@ int* numcount(int *x, int n, int m);
 
 int main( int argc, const char* argv[] ) {
   srand (time(NULL));  
-
+  clock_t begin, end;
+  double time_spent;
   printf( "\nStarting...\n");
 
   int* x = new int[16];
@@ -28,9 +29,14 @@ int main( int argc, const char* argv[] ) {
   int m = atoi(argv[2]);
   for(int i = 0 ; i < n ; i++)
     x[i] = rand() % 101;
-
+  
+  begin = clock();
   numcount(x,n,m);
+  end = clock();
 
+  time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+  cout << "Execution time: " << time_spent << "/n";
   return(0);
 }
 
