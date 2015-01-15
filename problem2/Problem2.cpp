@@ -28,7 +28,11 @@ int main( int argc, const char* argv[] ) {
   int n = atoi(argv[1]);
   int m = atoi(argv[2]);
   for(int i = 0 ; i < n ; i++)
+  {
     x[i] = rand() % 101;
+    cout << x[i] << " ";
+  }
+  cout << "\n";
   
   begin = clock();
   numcount(x,n,m);
@@ -36,7 +40,7 @@ int main( int argc, const char* argv[] ) {
 
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
-  cout << "Execution time: " << time_spent << "/n";
+  cout << "Execution time: " << time_spent << "\n";
   return(0);
 }
 
@@ -55,6 +59,10 @@ int *numcount(int *x, int n, int m) {
   {
     int offset = omp_get_thread_num();
     int numThreads = omp_get_num_threads();
+    #pragma omp single
+    {
+      printf("Num threads = %d\n", numThreads);
+    }
     int maxSubsequenceIndex = (((n - 1) - offset) / numThreads);  
 
     // Iterate through all subsequences
