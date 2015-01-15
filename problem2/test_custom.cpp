@@ -2,7 +2,7 @@
 #include <random>
 #include <chrono>
 
-
+using namespace std;
 using namespace std::chrono;
 
 int main( int argc, const char* argv[] ) {
