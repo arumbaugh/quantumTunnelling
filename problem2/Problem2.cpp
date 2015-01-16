@@ -28,12 +28,14 @@ int main( int argc, const char* argv[] ) {
   double time_spent;
   printf( "\nStarting...\n");
 
-  int* x = new int[16];
+  
   int n = atoi(argv[1]);
   int m = atoi(argv[2]);
+  int* x = new int[n];
   for(int i = 0 ; i < n ; i++)
   {
     x[i] = rand() % 101;
+    //x[i] = 10;
     //cout << x[i] << " ";
   }
   cout << "\n";
@@ -79,6 +81,15 @@ int compareArray(int* array1, int* array2, int m)
   return 1;
 }
 
+void printArraySequence(int* array, int m)
+{
+  for(int k = 0; k < m; k++)
+  {
+    printf("%d, ",array[k]);
+  }
+  
+  
+}
 
 string keyFromArray(int* array,int length);
 
@@ -90,7 +101,7 @@ int *numcount(int *x, int n, int m) {
   //std::tr1::unordered_map<string,int> sequenceCounts;
   
   int bitsize = ceil(log2(n-m+1));
-  node** hashtable = (node**) malloc(sizeof(node**)*((n-m+1)));
+  node** hashtable = (node**) malloc(sizeof(node**)*(pow(2,bitsize)));
   int length = (n-m+1);
   for(int i = 0; i < length; i++)
   {
@@ -104,17 +115,25 @@ int *numcount(int *x, int n, int m) {
     int numThreads = omp_get_num_threads();
     #pragma omp single
     {
-      printf("Num threads = %d\n", numThreads);
+      printf("Num threads = %d ", numThreads);
+      printf("length = %d ", length);
+      printf("\n");
     }
     // Iterate through all subsequences
-    #pragma omp for
-    for(int i = 0 ; i < n-m+1 ; i++) {
+    //#pragma omp for
+    #pragma omp single
+    {
+    for(int i = 0 ; i < n-m-1 ; i++) {
       // Convert the subsequence of integers to a string **vomit**
       #pragma omp critical
       {
       // Don't write without starting a critical section
          uint32_t hash32 = hash(&x[i],m);
          hash32 = (((hash32>>bitsize) ^ hash32) & TINY_MASK(bitsize));
+         printf("hash = %d  ",hash32);
+         printArraySequence(&x[i],m);
+         printf("i = %d ",i);
+         printf("\n");
          if(hashtable[hash32] == NULL)
          {
           node* newnode = (node*)malloc(sizeof(node*));
@@ -157,16 +176,26 @@ int *numcount(int *x, int n, int m) {
       } // end critical section
 
     } // reached end of array
+    }
   } // end of parallel processing. Implied break
 
   // Print the results of the hashtable
-  /*
-  cout << "Results:\n";
-  for(typename std::tr1::unordered_map<string,int>::iterator kv = sequenceCounts.begin(); kv != sequenceCounts.end() ; kv++) {
-    cout << "subseq: " << kv->first << " count : " << kv->second;
-    cout << endl;
-  } 
-   */
+  for(int i = 0; i <  n-m+1; i++)
+  {
+      if (hashtable[i]!= NULL)
+      {
+        for(int j = 0; j< hashtable[i]->amount; j++)
+        {
+         printf("Sequence: ");
+         for(int k = 0; k < m; k++)
+         {
+            printf("%d, ",hashtable[i]->array[j][k]);
+         }
+         printf("Count: %d\n",hashtable[i]->count[j]);
+        }
+      }
+  }
+   
 
   // TODO: convert output back to ints **vomit**
   return(x);
