@@ -24,9 +24,10 @@ int main( int argc, const char* argv[] ) {
   double time_spent;
   printf( "\nStarting...\n");
 
-  int* x = new int[16];
+  
   int n = atoi(argv[1]);
   int m = atoi(argv[2]);
+  int* x = new int[n];
   for(int i = 0 ; i < n ; i++)
   {
     x[i] = rand() % 101;
