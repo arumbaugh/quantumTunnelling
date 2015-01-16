@@ -16,10 +16,15 @@
 #include <time.h>
 #include <math.h>
 #include <stdint.h>
+#include <cstring>
 
 using namespace std;
+int outputarraylength = 0;
+
 
 int* numcount(int *x, int n, int m);
+
+void printOutputArray(int* array, int length, int m);
 
 
 int main( int argc, const char* argv[] ) {
@@ -41,14 +46,19 @@ int main( int argc, const char* argv[] ) {
   cout << "\n";
   
   begin = clock();
-  numcount(x,n,m);
+  int* output = numcount(x,n,m);
   end = clock();
-
+  
+  //printOutputArray(output, outputarraylength, m);
+  
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
   cout << "Execution time: " << time_spent << "\n";
   return(0);
 }
+
+
+
 
 //hashing function
 //FNV hashing algorithm
@@ -102,8 +112,9 @@ int *numcount(int *x, int n, int m) {
   
   int bitsize = ceil(log2(n-m+1));
   node** hashtable = (node**) malloc(sizeof(node**)*(pow(2,bitsize)));
-  int length = (n-m+1);
-  for(int i = 0; i < length; i++)
+  int hashtablelength = pow(2,bitsize);
+  int subsequences = 0;
+  for(int i = 0; i < hashtablelength; i++)
   {
     hashtable[i] = NULL;
   }
@@ -116,24 +127,21 @@ int *numcount(int *x, int n, int m) {
     #pragma omp single
     {
       printf("Num threads = %d ", numThreads);
-      printf("length = %d ", length);
+      printf("length = %d ", hashtablelength);
       printf("\n");
     }
     // Iterate through all subsequences
     //#pragma omp for
     #pragma omp single
     {
-    for(int i = 0 ; i < n-m-1 ; i++) {
-      // Convert the subsequence of integers to a string **vomit**
-      #pragma omp critical
-      {
+    for(int i = 0 ; i < n-m+1 ; i++) {
+      
       // Don't write without starting a critical section
          uint32_t hash32 = hash(&x[i],m);
          hash32 = (((hash32>>bitsize) ^ hash32) & TINY_MASK(bitsize));
-         printf("hash = %d  ",hash32);
-         printArraySequence(&x[i],m);
-         printf("i = %d ",i);
-         printf("\n");
+         #pragma omp critical
+      {
+         //no entry yet for hash
          if(hashtable[hash32] == NULL)
          {
           node* newnode = (node*)malloc(sizeof(node*));
@@ -143,10 +151,11 @@ int *numcount(int *x, int n, int m) {
           newnode->count[0] = 1;
           newnode->amount = 1;
           hashtable[hash32] = newnode;
+          subsequences++;
          }
+        //possible collision
          else
          {
-         //possible collision
           int collision = 1;
           for(int j = 0; j < hashtable[hash32]->amount ; j++)
           {
@@ -157,6 +166,7 @@ int *numcount(int *x, int n, int m) {
                 break;
             }
           }
+          //collision
           if(collision == 1)
           {
             //reallocate the size
@@ -166,49 +176,56 @@ int *numcount(int *x, int n, int m) {
             hashtable[hash32]->array[hashtable[hash32]->amount] = &x[i];
             hashtable[hash32]->count[hashtable[hash32]->amount] = 1;
             (hashtable[hash32]->amount)++;
-          }
-          
+            subsequences++;
+          }     
          }
-         
-        // increase count by 1.
-        // NOTE: If nothing is found, an element with count 0 is automatically inserted. This is a guaranteed behavior.
-
       } // end critical section
 
     } // reached end of array
     }
-  } // end of parallel processing. Implied break
-
-  // Print the results of the hashtable
-  for(int i = 0; i <  n-m+1; i++)
-  {
-      if (hashtable[i]!= NULL)
-      {
-        for(int j = 0; j< hashtable[i]->amount; j++)
-        {
-         printf("Sequence: ");
-         for(int k = 0; k < m; k++)
-         {
-            printf("%d, ",hashtable[i]->array[j][k]);
-         }
-         printf("Count: %d\n",hashtable[i]->count[j]);
-        }
-      }
-  }
+    //wait for all the threads to finish
    
-
-  // TODO: convert output back to ints **vomit**
-  return(x);
+  } // end of parallel processing. Implied break
+   //now we will place the results into the output array
+  printf("Moving to output array...\n");
+  int* outputarray = (int*) malloc(sizeof(int*) * (subsequences*(m+1)));
+  outputarraylength = subsequences*(m+1);
+  int currsubseqno = 0;
+  for(int i = 0; i <  hashtablelength; i++)
+  {
+    if(hashtable[i]!=NULL)
+    {
+      for(int j = 0; j < hashtable[i]->amount; j++)
+      {
+        for(int k = 0; k < m; k++)
+        {
+          outputarray[currsubseqno*(m+1)+k] = hashtable[i]->array[j][k];
+        }
+        outputarray[currsubseqno*(m+1)+m]=hashtable[i]->count[j];
+        currsubseqno++;
+      }
+      free(hashtable[i]->count);
+      free(hashtable[i]->array);
+      free(hashtable[i]);
+    }
+    if(currsubseqno >= subsequences)
+      break;
+  }
+  printf("Done copying to output array...\n");
+  free(hashtable);
+  printf("\n");
+  return(outputarray);
 }
 
-// Given an array of integers, converts that array to a string of comma-seperated integers.
-std::string keyFromArray(int* array, int length) {
-  string returnString;
-
-  for(int i = 0; i < length ; i++) {
-    returnString.append(static_cast<ostringstream*>(&(ostringstream() << array[i]) )->str());
-    returnString.append(",");
+void printOutputArray(int* array, int length, int m)
+{
+  for(int i = 0; i < length/(m+1); i++)
+  {
+    printf("Subsequence: ");
+    for(int j = 0; j<m;j++)
+    {
+      printf("%d, ", array[i*(m+1)+j]);
+    }
+    printf(" Count: %d\n", array[i*(m+1)+m]); 
   }
-
-  return (returnString);
 }
