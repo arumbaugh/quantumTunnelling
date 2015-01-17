@@ -11,17 +11,28 @@
 #include <sstream>
 #include <iostream>
 #include <iterator>
-#include <time.h>
+#include <ctime>
+#include <sys/time.h>
+#include <math.h>
+#include <stdint.h>
+#include <cstring>
+#include <iomanip>
 
 using namespace std;
 
 int* numcount(int *x, int n, int m);
-void printOutputArray(int* array, int length, int m);
 double get_wall_time();
+void printOutputArray(int* array, int length, int m);
+
+int outputarraylength = 0;
 
 struct node{
   int* array;
   int count;
+  node()
+  {
+    count = 0;
+  }
 };
 
 
@@ -37,17 +48,17 @@ int main( int argc, const char* argv[] ) {
   for(int i = 0 ; i < n ; i++)
   {
     x[i] = rand() % 101;
-    cout << x[i] << " ";
+    //x[i] = 10;
+    //cout << x[i] << " ";
   }
   cout << "\n";
   
-
-  numcount(x,n,m);
-
-
-
-
-
+  begin = get_wall_time();
+  int* output = numcount(x,n,m);
+  end = get_wall_time();
+  //printOutputArray(output, outputarraylength, m);
+ 
+  cout << "Execution time: " << end - begin << "\n";
   return(0);
 }
 
@@ -59,7 +70,7 @@ int *numcount(int *x, int n, int m) {
   // For now, we're using strings as keys for the hashtable. We cannot use an array of ints, which would be ideal,
   // because you must use a constant value as a key - c++ doesn't want you to modify the key while it's in the hash table.
   // TODO: Utilize a hashtable that does not need the costly int->string conversion 
-  std::tr1::unordered_map<string,node*> sequenceCounts;
+  std::tr1::unordered_map<string,node> sequenceCounts;
   int subsequences = 0;
   // Start the threads
   #pragma omp parallel
@@ -82,29 +93,33 @@ int *numcount(int *x, int n, int m) {
       {
         // increase count by 1.
         // NOTE: If nothing is found, an element with count 0 is automatically inserted. This is a guaranteed behavior.
-        if(sequenceCounts[subsequence] == NULL)
+        sequenceCounts[subsequence];
+        if(sequenceCounts[subsequence].count == 0)
         {
-          sequenceCounts[subsequence] = new node;
-          sequenceCounts[subsequence]->array = &(x[i]);
+          sequenceCounts[subsequence].array = &(x[i]);
+          (sequenceCounts[subsequence].count) = 0;
           subsequences++;
         }
-        (sequenceCounts[subsequence]->count)++;
+        (sequenceCounts[subsequence].count)++;
       } // end critical section
     } // reached end of array
   } // end of parallel processing. Implied break
-  // Print the results of the hashtable
-  cout << "Results:\n";
-  int* outputarray = (int*)malloc(sizeof(int*) * (subsequences*m+1));
+  
+  int* outputarray = (int*) malloc(sizeof(int*) * (subsequences*(m+1)));
   int currsubsequence = 0;
-  for(typename std::tr1::unordered_map<string,node*>::iterator kv = sequenceCounts.begin(); kv != sequenceCounts.end() ; kv++) {
+  outputarraylength = subsequences*(m+1);
+  
+  //load the subsequences into the output array
+  for(typename std::tr1::unordered_map<string,node>::iterator kv = sequenceCounts.begin(); kv != sequenceCounts.end() ; kv++) {
+    
     for(int i = 0; i < m; i++)
     {
-      outputarray[currsubsequence*(m+1) + i] = kv->second->array[i];
+      outputarray[currsubsequence*(m+1) + i] = kv->second.array[i];
     }
-    outputarray[currsubsequence*(m+1) + m] = kv->second->count;
+    outputarray[currsubsequence*(m+1) + m] = kv->second.count;
+    currsubsequence++;
   }    
 
-  // TODO: convert output back to ints **vomit**
   return(outputarray);
 }
 
