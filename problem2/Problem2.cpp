@@ -21,8 +21,6 @@
 
 using namespace std;
 int outputarraylength = 0;
-
-
 int* numcount(int *x, int n, int m);
 
 void printOutputArray(int* array, int length, int m);
@@ -49,9 +47,8 @@ int main( int argc, const char* argv[] ) {
   begin = clock();
   int* output = numcount(x,n,m);
   end = clock();
-  printf("hello! %d\n", output[0]);
   
-  printOutputArray(output, outputarraylength, m);
+  //printOutputArray(output, outputarraylength, m);
   
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
@@ -200,7 +197,7 @@ int *numcount(int *x, int n, int m) {
     }
   } // end of parallel processing. Implied break
    //now we will place the results into the output array
-  printf("Moving to output array...\n");
+  clock_t begin = clock();
   int* outputarray = (int*) malloc(sizeof(int*) * (subsequences*(m+1)));
   outputarraylength = subsequences*(m+1);
   int currsubseqno = 0;
@@ -224,9 +221,11 @@ int *numcount(int *x, int n, int m) {
     if(currsubseqno >= subsequences)
       break;
   }
-  printf("Done copying to output array...\n");
+  begin = clock() - begin;
+  printf("Copying time: %.2f\n",(double)begin/ CLOCKS_PER_SEC);
   free(hashtable);
   printf("\n");
+  return(outputarray);
 } 
 
 
