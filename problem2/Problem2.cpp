@@ -13,7 +13,8 @@
 #include <sstream>
 #include <iostream>
 #include <iterator>
-#include <time.h>
+#include <ctime>
+#include <sys/time.h>
 #include <math.h>
 #include <stdint.h>
 #include <cstring>
@@ -22,14 +23,13 @@
 using namespace std;
 int outputarraylength = 0;
 int* numcount(int *x, int n, int m);
-
+double get_wall_time();
 void printOutputArray(int* array, int length, int m);
 
 
 int main( int argc, const char* argv[] ) {
   srand (time(NULL));  
-  clock_t begin, end;
-  double time_spent;
+  double begin, end;
   printf( "\nStarting...\n");
 
   
@@ -44,15 +44,12 @@ int main( int argc, const char* argv[] ) {
   }
   cout << "\n";
   
-  begin = clock();
+  begin = get_wall_time();
   int* output = numcount(x,n,m);
-  end = clock();
-  
+  end = get_wall_time();
   //printOutputArray(output, outputarraylength, m);
-  
-  time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-  cout << "Execution time: " << time_spent << "\n";
+ 
+  cout << "Execution time: " << end - begin << "\n";
   return(0);
 }
 
@@ -119,8 +116,8 @@ int *numcount(int *x, int n, int m) {
   // Start the threads
   #pragma omp parallel
   {
-    clock_t setup_time = 0,  begin, thread_time, wait_time = 0, hash_time = 0, critical_time = 0;
-    hash_time = thread_time = clock();
+    double setup_time = get_wall_time(),  begin, thread_time, wait_time = 0, hash_time = 0, critical_time = 0;
+    thread_time = get_wall_time();
     int offset = omp_get_thread_num();
     int numThreads = omp_get_num_threads();
     #pragma omp single
@@ -130,19 +127,20 @@ int *numcount(int *x, int n, int m) {
       printf("\n");
       printf("%s \t %s \t %s \t %s \t %s \t %s\n","No","Setup","Wait","Hash","Crit", "Thread");
     }
-    setup_time = clock() - setup_time;
+    setup_time = get_wall_time() - setup_time;
     #pragma omp for
+    {
     for(int i = 0 ; i < n-m+1 ; i++) {   
       // Don't write without starting a critical section
-      begin = clock();
+      begin = get_wall_time();
       uint32_t hash32 = hash(&x[i],m);
       hash32 = (((hash32>>bitsize) ^ hash32) & TINY_MASK(bitsize));
-      hash_time += clock() - begin;
-      begin = clock();
+      hash_time += get_wall_time() - begin;
+      begin = get_wall_time();
       #pragma omp critical
       {
-         wait_time += clock()-begin;
-         begin = clock();
+         wait_time += get_wall_time()-begin;
+         begin = get_wall_time();
          //no entry yet for hash
          if(hashtable[hash32] == NULL)
          {
@@ -181,23 +179,23 @@ int *numcount(int *x, int n, int m) {
             subsequences++;
           }     
          }
-       critical_time += clock() - begin;
+       critical_time += get_wall_time() - begin;
       } // end critical section
 
     } // reached end of array
     //wait for all the threads to finish
-    thread_time = clock() - thread_time;
+    thread_time = get_wall_time() - thread_time;
     #pragma omp barrier
     #pragma omp critical
     { 
       printf("%d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f\n", offset, 
-      (double)setup_time / CLOCKS_PER_SEC, (double)wait_time / CLOCKS_PER_SEC, (double)hash_time / CLOCKS_PER_SEC,
-      (double)critical_time / CLOCKS_PER_SEC, (double)thread_time / CLOCKS_PER_SEC);
+      setup_time, wait_time,hash_time,
+      critical_time, thread_time);
 
     }
   } // end of parallel processing. Implied break
    //now we will place the results into the output array
-  clock_t begin = clock();
+  double begin = get_wall_time();
   int* outputarray = (int*) malloc(sizeof(int*) * (subsequences*(m+1)));
   outputarraylength = subsequences*(m+1);
   int currsubseqno = 0;
@@ -221,8 +219,8 @@ int *numcount(int *x, int n, int m) {
     if(currsubseqno >= subsequences)
       break;
   }
-  begin = clock() - begin;
-  printf("Copying time: %.2f\n",(double)begin/ CLOCKS_PER_SEC);
+  begin = get_wall_time() - begin;
+  printf("Copying time: %.2f\n",begin);
   free(hashtable);
   printf("\n");
   return(outputarray);
@@ -240,4 +238,13 @@ void printOutputArray(int* array, int length, int m)
     }
     printf(" Count: %d\n", array[i*(m+1)+m]); 
   }
+}
+
+double get_wall_time(){
+    struct timeval time;
+    if (gettimeofday(&time,NULL)){
+        //  Handle error
+        return 0;
+    }
+    return (double)time.tv_sec + (double)time.tv_usec * .000001;
 }
