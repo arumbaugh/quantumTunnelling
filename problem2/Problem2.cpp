@@ -17,6 +17,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <cstring>
+#include <iomanip>
 
 using namespace std;
 int outputarraylength = 0;
@@ -48,8 +49,9 @@ int main( int argc, const char* argv[] ) {
   begin = clock();
   int* output = numcount(x,n,m);
   end = clock();
+  printf("hello! %d\n", output[0]);
   
-  //printOutputArray(output, outputarraylength, m);
+  printOutputArray(output, outputarraylength, m);
   
   time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
@@ -107,8 +109,6 @@ int *numcount(int *x, int n, int m) {
   // For this version, we will use a map as a global hash table that all threads access.
   // For now, we're using strings as keys for the hashtable. We cannot use an array of ints, which would be ideal,
   // because you must use a constant value as a key - c++ doesn't want you to modify the key while it's in the hash table.
-  // TODO: Utilize a hashtable that does not need the costly int->string conversion 
-  //std::tr1::unordered_map<string,int> sequenceCounts;
   
   int bitsize = ceil(log2(n-m+1));
   node** hashtable = (node**) malloc(sizeof(node**)*(pow(2,bitsize)));
@@ -122,6 +122,8 @@ int *numcount(int *x, int n, int m) {
   // Start the threads
   #pragma omp parallel
   {
+    clock_t setup_time = 0,  begin, thread_time, wait_time = 0, hash_time = 0, critical_time = 0;
+    hash_time = thread_time = clock();
     int offset = omp_get_thread_num();
     int numThreads = omp_get_num_threads();
     #pragma omp single
@@ -129,18 +131,21 @@ int *numcount(int *x, int n, int m) {
       printf("Num threads = %d ", numThreads);
       printf("length = %d ", hashtablelength);
       printf("\n");
+      printf("%s \t %s \t %s \t %s \t %s \t %s\n","No","Setup","Wait","Hash","Crit", "Thread");
     }
-    // Iterate through all subsequences
-    //#pragma omp for
-    #pragma omp single
-    {
-    for(int i = 0 ; i < n-m+1 ; i++) {
-      
+    setup_time = clock() - setup_time;
+    #pragma omp for
+    for(int i = 0 ; i < n-m+1 ; i++) {   
       // Don't write without starting a critical section
-         uint32_t hash32 = hash(&x[i],m);
-         hash32 = (((hash32>>bitsize) ^ hash32) & TINY_MASK(bitsize));
-         #pragma omp critical
+      begin = clock();
+      uint32_t hash32 = hash(&x[i],m);
+      hash32 = (((hash32>>bitsize) ^ hash32) & TINY_MASK(bitsize));
+      hash_time += clock() - begin;
+      begin = clock();
+      #pragma omp critical
       {
+         wait_time += clock()-begin;
+         begin = clock();
          //no entry yet for hash
          if(hashtable[hash32] == NULL)
          {
@@ -179,12 +184,20 @@ int *numcount(int *x, int n, int m) {
             subsequences++;
           }     
          }
+       critical_time += clock() - begin;
       } // end critical section
 
     } // reached end of array
-    }
     //wait for all the threads to finish
-   
+    thread_time = clock() - thread_time;
+    #pragma omp barrier
+    #pragma omp critical
+    { 
+      printf("%d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f\n", offset, 
+      (double)setup_time / CLOCKS_PER_SEC, (double)wait_time / CLOCKS_PER_SEC, (double)hash_time / CLOCKS_PER_SEC,
+      (double)critical_time / CLOCKS_PER_SEC, (double)thread_time / CLOCKS_PER_SEC);
+
+    }
   } // end of parallel processing. Implied break
    //now we will place the results into the output array
   printf("Moving to output array...\n");
@@ -214,8 +227,8 @@ int *numcount(int *x, int n, int m) {
   printf("Done copying to output array...\n");
   free(hashtable);
   printf("\n");
-  return(outputarray);
-}
+} 
+
 
 void printOutputArray(int* array, int length, int m)
 {
