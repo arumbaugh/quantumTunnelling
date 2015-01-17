@@ -16,6 +16,8 @@
 using namespace std;
 
 int* numcount(int *x, int n, int m);
+void printOutputArray(int* array, int length, int m);
+double get_wall_time();
 
 struct node{
   int* array;
@@ -117,3 +119,26 @@ std::string keyFromArray(int* array, int length) {
 
   return (returnString);
 }
+
+void printOutputArray(int* array, int length, int m)
+{
+  for(int i = 0; i < length/(m+1); i++)
+  {
+    printf("Subsequence: ");
+    for(int j = 0; j<m;j++)
+    {
+      printf("%d, ", array[i*(m+1)+j]);
+    }
+    printf(" Count: %d\n", array[i*(m+1)+m]); 
+  }
+}
+
+double get_wall_time(){
+    struct timeval time;
+    if (gettimeofday(&time,NULL)){
+        //  Handle error
+        return 0;
+    }
+    return (double)time.tv_sec + (double)time.tv_usec * .000001;
+}
+
