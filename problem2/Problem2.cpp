@@ -129,7 +129,6 @@ int *numcount(int *x, int n, int m) {
     }
     setup_time = get_wall_time() - setup_time;
     #pragma omp for
-    {
     for(int i = 0 ; i < n-m+1 ; i++) {   
       // Don't write without starting a critical section
       begin = get_wall_time();
