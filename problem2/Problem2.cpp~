@@ -238,7 +238,6 @@ int *numcount(int *x, int n, int m) {
   begin = get_wall_time() - begin;
   printf("Copying time: %.2f\n",begin);
   free(hashtable);
-  free(lock);
   printf("\n");
   return(outputarray);
 } 
