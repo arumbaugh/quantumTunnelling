@@ -186,7 +186,9 @@ int *numcount(int *x, int n, int m) {
          else
          {
           int collision = 1;
-          for(int j = 0; j < hashtable[hash32]->amount ; j++)
+	  //Save the amount in a variable to save on multiple redundant reads from hash table
+	  int amt = hashtable[hash32]->amount;
+          for(int j = 0; j < amt ; j++)
           {
             if(compareArray(hashtable[hash32]->array[j],&x[i],m) == 1)
             {
@@ -236,7 +238,6 @@ int *numcount(int *x, int n, int m) {
       setup_time, wait_time,hash_time,
       critical_time, thread_time);
     }
-    double destroy_time = get_wall_time();
     #pragma omp for
     for(int i = 0; i < hashtablelength; i++)
     {
@@ -257,8 +258,6 @@ int *numcount(int *x, int n, int m) {
   free(hashtable);
   free(lock);
   printf("\n");
-  destroy_time = get_wall_time() - destroy_time;
-  printf("Destroy time: %.2f\n", destroy_time);
   outputarray[0]=subsequences;
   return(outputarray);
 } 
