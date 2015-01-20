@@ -236,12 +236,30 @@ int *numcount(int *x, int n, int m) {
       setup_time, wait_time,hash_time,
       critical_time, thread_time);
     }
+    double destroy_time = get_wall_time();
+    #pragma omp for
+    for(int i = 0; i < hashtablelength; i++)
+    {
+      if(hashtable[i] !=NULL)
+      {
+        free(hashtable[i]->array);
+        free(hashtable[i]);
+      }
+      omp_destroy_lock(&(lock[i]));
+    }
   } // end of parallel processing. Implied break
    //now we will place the results into the output array
-  outputarray[0]=subsequences;
+   
+  
+  omp_destroy_lock(outputindexlock);
+
+
   free(hashtable);
   free(lock);
   printf("\n");
+  destroy_time = get_wall_time() - destroy_time;
+  printf("Destroy time: %.2f\n", destroy_time);
+  outputarray[0]=subsequences;
   return(outputarray);
 } 
 
