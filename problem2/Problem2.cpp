@@ -21,10 +21,9 @@
 #include <iomanip>
 
 using namespace std;
-int outputarraylength = 0;
 int* numcount(int *x, int n, int m);
 double get_wall_time();
-void printOutputArray(int* array, int length, int m);
+void printOutputArray(int* array, int m);
 
 
 int main( int argc, const char* argv[] ) {
@@ -50,7 +49,7 @@ int main( int argc, const char* argv[] ) {
   begin = get_wall_time();
   int* output = numcount(x,n,m);
   end = get_wall_time();
-  //printOutputArray(output, outputarraylength, m);
+  //printOutputArray(output, m);
  
   cout << "Execution time: " << end - begin << "\n";
   return(0);
@@ -236,7 +235,6 @@ int *numcount(int *x, int n, int m) {
   double begin = get_wall_time();
   int num_of_subseq = subsequences*(m+1);
   int* outputarray = (int*) malloc(sizeof(int*) * (1+num_of_subseq));
-  outputarraylength = num_of_subseq;
   int currsubseqno = 0;
 
   outputarray[0] = subsequences;
@@ -279,16 +277,17 @@ int *numcount(int *x, int n, int m) {
 } 
 
 
-void printOutputArray(int* array, int length, int m)
+void printOutputArray(int* array, int m)
 {
-  for(int i = 0; i < length/(m+1); i++)
+  int length = array[0];
+  for(int i = 0; i < length; i++)
   {
     printf("Subsequence: ");
     for(int j = 0; j<m;j++)
     {
-      printf("%d, ", array[i*(m+1)+j]);
+      printf("%d, ", array[1 + i*(m+1)+j]);
     }
-    printf(" Count: %d\n", array[i*(m+1)+m]); 
+    printf(" Count: %d\n", array[1 + i*(m+1)+m]); 
   }
 }
 
