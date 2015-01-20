@@ -186,7 +186,9 @@ int *numcount(int *x, int n, int m) {
          else
          {
           int collision = 1;
-          for(int j = 0; j < hashtable[hash32]->amount ; j++)
+	  //Save the amount in a variable to save on multiple redundant reads from hash table
+	  int amt = hashtable[hash32]->amount;
+          for(int j = 0; j < amt ; j++)
           {
             if(compareArray(hashtable[hash32]->array[j],&x[i],m) == 1)
             {
