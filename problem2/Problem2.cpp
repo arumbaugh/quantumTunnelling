@@ -120,7 +120,8 @@ int *numcount(int *x, int n, int m) {
   // Number of indices in hash_index
   int hash_index_count = 0;
 
-  hash_index[0] = 6;
+  omp_lock_t* subseqcountlock = (omp_lock_t*)malloc(sizeof(omp_lock_t*));
+  omp_init_lock(subseqcountlock);
 
   for(int i = 0; i < hashtablelength; i++)
   {
@@ -163,9 +164,11 @@ int *numcount(int *x, int n, int m) {
          if(hashtable[hash32] == NULL)
          {
           //add to hash_index;
-          hash_index[hash_index_count] = hash32;
-          hash_index_count++;
-
+          #pragma omp critical
+          {
+            hash_index[hash_index_count] = hash32;
+            hash_index_count++;
+          }
           node* newnode = (node*)malloc(sizeof(node*));
           newnode->array = (int**)malloc(sizeof(int**));
           newnode->array[0] = &x[i];
@@ -173,7 +176,12 @@ int *numcount(int *x, int n, int m) {
           newnode->count[0] = 1;
           newnode->amount = 1;
           hashtable[hash32] = newnode;
-          subsequences++;
+          omp_set_lock(subseqcountlock);
+          {
+                        
+            subsequences++;
+          }
+          omp_unset_lock(subseqcountlock);
          }
          //possible collision
          //only add hash32 to hash_index if it hasn't been used before
@@ -200,7 +208,11 @@ int *numcount(int *x, int n, int m) {
             hashtable[hash32]->array[hashtable[hash32]->amount] = &x[i];
             hashtable[hash32]->count[hashtable[hash32]->amount] = 1;
             (hashtable[hash32]->amount)++;
-            subsequences++;
+            omp_set_lock(subseqcountlock);
+            {
+              subsequences++;
+            }
+            omp_unset_lock(subseqcountlock);
           }     
          }
        critical_time += get_wall_time() - begin;
@@ -223,40 +235,43 @@ int *numcount(int *x, int n, int m) {
   //now we will place the results into the output array
   double begin = get_wall_time();
   int num_of_subseq = subsequences*(m+1);
-  int* outputarray = (int*) malloc(sizeof(int*) * (num_of_subseq));
+  int* outputarray = (int*) malloc(sizeof(int*) * (1+num_of_subseq));
   outputarraylength = num_of_subseq;
   int currsubseqno = 0;
 
   outputarray[0] = subsequences;
   
-  #pragma omp parallel for   
   //copying out the elements of the hash table to outputarray
+  //#pragma omp parallel for   
   for(int i = 0; i < hash_index_count; i++) 
-  {
+  {  
     for(int j = 0; j < hashtable[hash_index[i]]->amount; j++)
     {
+      int outputindex = 0;
+      //#pragma omp critical
+      {
+        outputindex = currsubseqno;
+        currsubseqno++;
+      } 
       for(int k = 0; k < m; k++)
       {
-        outputarray[currsubseqno*(m+1)+k] = hashtable[hash_index[i]]->array[j][k];
+        outputarray[1 + outputindex*(m+1)+k] = hashtable[hash_index[i]]->array[j][k];
       }
-      outputarray[currsubseqno*(m+1)+m]=hashtable[hash_index[i]]->count[j];
-      currsubseqno++;
+      outputarray[1 + outputindex*(m+1)+m]=hashtable[hash_index[i]]->count[j];
     }
     free(hashtable[hash_index[i]]->count);
     free(hashtable[hash_index[i]]->array);
     free(hashtable[hash_index[i]]);
   }
-
-  #pragma omp parallel for
+  printf("HELLO!\n");
   // go through and destroy the locks
+  #pragma omp parallel for
   for(int i = 0; i <  hashtablelength; i++)
   {
     omp_destroy_lock(&(lock[i]));
   }
 
 
-  begin = get_wall_time() - begin;
-  printf("Copying time: %.2f\n",begin);
   free(hashtable);
   free(lock);
   printf("\n");
