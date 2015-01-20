@@ -27,7 +27,8 @@ void printOutputArray(int* array, int m);
 
 
 int main( int argc, const char* argv[] ) {
-  srand (time(NULL));  
+  srand (time(NULL));
+  srand (12345);
   double begin, end;
   printf( "\nStarting...\n");
 
@@ -44,7 +45,6 @@ int main( int argc, const char* argv[] ) {
     //x[i] = 10;
     //cout << x[i] << " ";
   }
-  cout << "\n";
   
   begin = get_wall_time();
   int* output = numcount(x,n,m);
@@ -104,20 +104,25 @@ int *numcount(int *x, int n, int m) {
   // For this version, we will use a map as a global hash table that all threads access.
   // For now, we're using strings as keys for the hashtable. We cannot use an array of ints, which would be ideal,
   // because you must use a constant value as a key - c++ doesn't want you to modify the key while it's in the hash table.
-  
+  int* bitsize = (int*)malloc(sizeof(int));
+  *bitsize = ceil(log2(n-m+1));
 
-  int bitsize = ceil(log2(n-m+1));
-  int hashtablelength = pow(2,bitsize);
-  node** hashtable = (node**) malloc(sizeof(node**)*(hashtablelength));
-  int subsequences = 0;
+  int* hashtablelength =(int*)malloc(sizeof(int));
+  *hashtablelength = pow(2,*bitsize);
+  node** hashtable = (node**) malloc(sizeof(node**)*(*hashtablelength));
+  int *subsequence_arr;
   // Array of locks for individual locking
-  omp_lock_t* lock = (omp_lock_t*)malloc(sizeof(omp_lock_t*)*(hashtablelength));
+  omp_lock_t* lock = (omp_lock_t*)malloc(sizeof(omp_lock_t*)*(*hashtablelength));
   int* outputarray = (int*) malloc(sizeof(int*) * (1 + (n-m+1)*(m+1)) );
   outputarray[0] = 0;
-  int currsubseqno = 0;
+  int* currsubseqno = (int*) malloc(sizeof(int*));
+  *currsubseqno = 0;
+  
+  int* numThreads = (int*)malloc(sizeof(int*));
+  
   omp_lock_t* outputindexlock = (omp_lock_t*)malloc(sizeof(omp_lock_t*));
   omp_init_lock(outputindexlock);
-  for(int i = 0; i < hashtablelength; i++)
+  for(int i = 0; i < *hashtablelength; i++)
   {
     hashtable[i] = NULL;
     //initializes the array of locks
@@ -130,22 +135,24 @@ int *numcount(int *x, int n, int m) {
     double setup_time = get_wall_time(), begin, thread_time, wait_time = 0, hash_time = 0, critical_time = 0;
     thread_time = get_wall_time();
     int offset = omp_get_thread_num();
-    int numThreads = omp_get_num_threads();
+    *numThreads = omp_get_num_threads();
     int outputindex = 0;
     #pragma omp single
     {
-      printf("Num threads = %d ", numThreads);
-      printf("length = %d ", hashtablelength);
-      printf("\n");
-      printf("%s \t %s \t %s \t %s \t %s \t %s\n","No","Setup","Wait","Hash","Crit", "Thread");
+      //printf("Num threads = %d ", numThreads);
+      //printf("length = %d ", hashtablelength);
+      //printf("\n");
+      //printf("%s \t %s \t %s \t %s \t %s \t %s\n","No","Setup","Wait","Hash","Crit", "Thread");
+      //subsequence_arr = (int*) malloc(sizeof(int*)*(*numThreads));
     }
     setup_time = get_wall_time() - setup_time;
+    //subsequence_arr[offset] = 0;
     #pragma omp for
     for(int i = 0 ; i < n-m+1 ; i++) {   
       // Don't write without starting a critical section
       begin = get_wall_time();
       uint32_t hash32 = hash(&x[i],m);
-      hash32 = (((hash32>>bitsize) ^ hash32) & TINY_MASK(bitsize));
+      hash32 = (((hash32>>*bitsize) ^ hash32) & TINY_MASK(*bitsize));
       hash_time += get_wall_time() - begin;
       begin = get_wall_time();
  
@@ -159,18 +166,15 @@ int *numcount(int *x, int n, int m) {
          {
           node* newnode = (node*)malloc(sizeof(node*));
           newnode->array = (int**)malloc(sizeof(int**));
-          
-          
           //aquire lock
           omp_set_lock(outputindexlock);
           {
-            outputindex = currsubseqno;
+            outputindex = *currsubseqno;
             outputarray[0]++;
-            currsubseqno++;
-            subsequences++;
+            (*currsubseqno)++;
           }
           omp_unset_lock(outputindexlock);
-
+          //subsequence_arr[offset]++;
           //load into the outputarray
           for(int j =0; j < m; j++)
           {
@@ -206,12 +210,12 @@ int *numcount(int *x, int n, int m) {
             //aquire lock
             omp_set_lock(outputindexlock);
             {
-              outputindex = currsubseqno;
+              outputindex = *currsubseqno;
               outputarray[0]++;
-              currsubseqno++;
-              subsequences++;
+              (*currsubseqno)++;
             }
             omp_unset_lock(outputindexlock);
+            //subsequence_arr[offset]++;
             
             //load into the outputarray
             for(int j =0; j < m; j++)
@@ -232,14 +236,16 @@ int *numcount(int *x, int n, int m) {
     } // reached end of array
     //wait for all the threads to finish
     thread_time = get_wall_time() - thread_time;
+    /*
     #pragma omp critical
     { 
       printf("%d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f\n", offset, 
       setup_time, wait_time,hash_time,
       critical_time, thread_time);
     }
+    */
     #pragma omp for
-    for(int i = 0; i < hashtablelength; i++)
+    for(int i = 0; i < *hashtablelength; i++)
     {
       if(hashtable[i] !=NULL)
       {
@@ -250,15 +256,21 @@ int *numcount(int *x, int n, int m) {
     }
   } // end of parallel processing. Implied break
    //now we will place the results into the output array
-   
+  //for(int i = 0; i < *numThreads; i++)
+    //outputarray[0]++;
+  //free(subsequence_arr);
   
   omp_destroy_lock(outputindexlock);
 
-
+  free(bitsize);
+  free(hashtablelength);
+  free(currsubseqno);
+  free(numThreads);
+  
+  
   free(hashtable);
   free(lock);
   printf("\n");
-  outputarray[0]=subsequences;
   return(outputarray);
 } 
 
