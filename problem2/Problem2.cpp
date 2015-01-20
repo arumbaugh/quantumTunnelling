@@ -240,13 +240,13 @@ int *numcount(int *x, int n, int m) {
   outputarray[0] = subsequences;
   
   //copying out the elements of the hash table to outputarray
-  //#pragma omp parallel for   
+  #pragma omp parallel for   
   for(int i = 0; i < hash_index_count; i++) 
   {  
     for(int j = 0; j < hashtable[hash_index[i]]->amount; j++)
     {
       int outputindex = 0;
-      //#pragma omp critical
+      #pragma omp critical
       {
         outputindex = currsubseqno;
         currsubseqno++;
