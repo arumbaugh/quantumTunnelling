@@ -42,7 +42,7 @@ int main( int argc, const char* argv[] ) {
   {
     x[i] = rand() % 101;
     //x[i] = 10;
-    cout << x[i] << " ";
+    //cout << x[i] << " ";
   }
   cout << "\n";
   
@@ -51,7 +51,7 @@ int main( int argc, const char* argv[] ) {
   end = get_wall_time();
 
 
-  printOutputArray(output, m);
+  //printOutputArray(output, m);
  
   cout << "Execution time: " << end - begin << "\n";
   return(0);
