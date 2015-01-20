@@ -233,18 +233,18 @@ int *numcount(int *x, int n, int m) {
   //copying out the elements of the hash table to outputarray
   for(int i = 0; i < hash_index_count; i++) 
   {
-    for(int j = 0; j < hashtable[hash_index[i]]->amount; j++)
+    for(int j = 0; j < hashtable[hash_index[j]]->amount; j++)
     {
       for(int k = 0; k < m; k++)
       {
-        outputarray[currsubseqno*(m+1)+k] = hashtable[hash_index[i]]->array[j][k];
+        outputarray[currsubseqno*(m+1)+k] = hashtable[hash_index[j]]->array[j][k];
       }
-      outputarray[currsubseqno*(m+1)+m]=hashtable[hash_index[i]]->count[j];
+      outputarray[currsubseqno*(m+1)+m]=hashtable[hash_index[j]]->count[j];
       currsubseqno++;
     }
-    free(hashtable[hash_index[i]]->count);
-    free(hashtable[hash_index[i]]->array);
-    free(hashtable[hash_index[i]]);
+    free(hashtable[hash_index[j]]->count);
+    free(hashtable[hash_index[j]]->array);
+    free(hashtable[hash_index[j]]);
   }
 
   #pragma omp parallel for
