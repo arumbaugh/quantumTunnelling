@@ -21,10 +21,9 @@
 #include <iomanip>
 
 using namespace std;
-int outputarraylength = 0;
 int* numcount(int *x, int n, int m);
 double get_wall_time();
-void printOutputArray(int* array, int length, int m);
+void printOutputArray(int* array, int m);
 
 
 int main( int argc, const char* argv[] ) {
@@ -43,14 +42,16 @@ int main( int argc, const char* argv[] ) {
   {
     x[i] = rand() % 101;
     //x[i] = 10;
-    //cout << x[i] << " ";
+    cout << x[i] << " ";
   }
   cout << "\n";
   
   begin = get_wall_time();
   int* output = numcount(x,n,m);
   end = get_wall_time();
-  printOutputArray(output, outputarraylength, m);
+
+
+  printOutputArray(output, m);
  
   cout << "Execution time: " << end - begin << "\n";
   return(0);
@@ -77,7 +78,6 @@ uint32_t hash(int *data, int length)
 //
 struct node{
   int** array;
-  int* count;
   int amount;
 };
 
@@ -167,6 +167,7 @@ int *numcount(int *x, int n, int m) {
             outputindex = currsubseqno;
             outputarray[0]++;
             currsubseqno++;
+            subsequences++;
           }
           omp_unset_lock(outputindexlock);
 
@@ -175,10 +176,8 @@ int *numcount(int *x, int n, int m) {
           {
             outputarray[1+ outputindex * (m+1) + j] = x[i+j];
           }
-          
-          newnode->array[0] = &x[i];
-          newnode->count = (int*)malloc(sizeof(int*));
-          newnode->count[0] = 1;
+          outputarray[1+ outputindex * (m+1) + m] = 1;
+          newnode->array[0] = &outputarray[1+ outputindex * (m+1)];
           newnode->amount = 1;
           hashtable[hash32] = newnode;
           
@@ -192,7 +191,6 @@ int *numcount(int *x, int n, int m) {
             if(compareArray(hashtable[hash32]->array[j],&x[i],m) == 1)
             {
                 (hashtable[hash32]->array[j][m])++;                  
-                (hashtable[hash32]->count[j])++;
                 collision = 0;
                 break;
             }
@@ -202,7 +200,6 @@ int *numcount(int *x, int n, int m) {
           {
             //reallocate the size
             hashtable[hash32]->array = (int**)realloc( hashtable[hash32]->array , ((hashtable[hash32]->amount)+1)*sizeof(int**) );
-            hashtable[hash32]->count = (int*)realloc( hashtable[hash32]->count, ((hashtable[hash32]->amount)+1)*sizeof(int*) );
             
             //aquire lock
             omp_set_lock(outputindexlock);
@@ -210,6 +207,7 @@ int *numcount(int *x, int n, int m) {
               outputindex = currsubseqno;
               outputarray[0]++;
               currsubseqno++;
+              subsequences++;
             }
             omp_unset_lock(outputindexlock);
             
@@ -221,9 +219,8 @@ int *numcount(int *x, int n, int m) {
             outputarray[1+ outputindex * (m+1) + m] = 1;
             
             hashtable[hash32]->array[hashtable[hash32]->amount] = &outputarray[1+ outputindex * (m+1)];
-            hashtable[hash32]->count[hashtable[hash32]->amount] = 1;
             (hashtable[hash32]->amount)++;
-            subsequences++;
+            
           }     
          }
        critical_time += get_wall_time() - begin;
@@ -241,7 +238,7 @@ int *numcount(int *x, int n, int m) {
     }
   } // end of parallel processing. Implied break
    //now we will place the results into the output array
- 
+  outputarray[0]=subsequences;
   free(hashtable);
   free(lock);
   printf("\n");
@@ -249,16 +246,17 @@ int *numcount(int *x, int n, int m) {
 } 
 
 
-void printOutputArray(int* array, int length, int m)
+void printOutputArray(int* array, int m)
 {
-  for(int i = 0; i < length/(m+1); i++)
+  int subsequences = array[0];  
+  for(int i = 0; i < subsequences; i++)
   {
     printf("Subsequence: ");
     for(int j = 0; j<m;j++)
     {
-      printf("%d, ", array[i*(m+1)+j]);
+      printf("%d, ", array[1+ i*(m+1)+j]);
     }
-    printf(" Count: %d\n", array[i*(m+1)+m]); 
+    printf(" Count: %d\n", array[1+ i*(m+1)+m]); 
   }
 }
 
