@@ -21,44 +21,6 @@
 #include <iomanip>
 
 using namespace std;
-int* numcount(int *x, int n, int m);
-double get_wall_time();
-void printOutputArray(int* array, int m);
-
-
-int main( int argc, const char* argv[] ) {
-  srand (time(NULL));
-  srand (12345);
-  double begin, end;
-  //printf( "\nStarting...\n");
-
-  // length of array
-  int n = atoi(argv[1]);
-  // length of patterns  
-  int m = atoi(argv[2]);
-
-  // building the array to search through
-  int* x = new int[n];
-  for(int i = 0 ; i < n ; i++)
-  {
-    x[i] = rand() % 101;
-    //x[i] = 10;
-    //cout << x[i] << " ";
-  }
-  
-  begin = get_wall_time();
-  int* output = numcount(x,n,m);
-  end = get_wall_time();
-
-
-  //printOutputArray(output, m);
- 
-  cout << "Execution time: " << end - begin << "\n";
-  return(0);
-}
-
-
-
 
 //hashing function
 //FNV hashing algorithm
@@ -90,15 +52,6 @@ int compareArray(int* array1, int* array2, int m)
   return 1;
 }
 
-void printArraySequence(int* array, int m)
-{
-  for(int k = 0; k < m; k++)
-  {
-    printf("%d, ",array[k]);
-  }
-}
-
-string keyFromArray(int* array,int length);
 
 int *numcount(int *x, int n, int m) {
   // For this version, we will use a map as a global hash table that all threads access.
@@ -106,7 +59,6 @@ int *numcount(int *x, int n, int m) {
   // because you must use a constant value as a key - c++ doesn't want you to modify the key while it's in the hash table.
   int* bitsize = (int*)malloc(sizeof(int));
   *bitsize = ceil(log2(n-m+1));
-  printf("bitsize: %d\n",*bitsize);
   int* hashtablelength =(int*)malloc(sizeof(int));
   *hashtablelength = pow(2,*bitsize);
   node** hashtable = (node**) malloc(sizeof(node**)*(*hashtablelength));
@@ -246,30 +198,5 @@ int *numcount(int *x, int n, int m) {
   free(hashtable);
   free(lock);
 */
-  printf("\n");
   return(outputarray);
 } 
-
-
-void printOutputArray(int* array, int m)
-{
-  int subsequences = array[0];  
-  for(int i = 0; i < subsequences; i++)
-  {
-    printf("Subsequence: ");
-    for(int j = 0; j<m;j++)
-    {
-      printf("%d, ", array[1+ i*(m+1)+j]);
-    }
-    printf(" Count: %d\n", array[1+ i*(m+1)+m]); 
-  }
-}
-
-double get_wall_time(){
-    struct timeval time;
-    if (gettimeofday(&time,NULL)){
-        //  Handle error
-        return 0;
-    }
-    return (double)time.tv_sec + (double)time.tv_usec * .000001;
-}
