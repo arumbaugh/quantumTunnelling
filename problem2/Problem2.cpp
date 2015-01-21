@@ -30,7 +30,7 @@ int main( int argc, const char* argv[] ) {
   srand (time(NULL));
   srand (12345);
   double begin, end;
-  printf( "\nStarting...\n");
+  //printf( "\nStarting...\n");
 
   // length of array
   int n = atoi(argv[1]);
@@ -132,7 +132,7 @@ int *numcount(int *x, int n, int m) {
   // Start the threads
   #pragma omp parallel //for shared(lock)
   {    
-    double setup_time = get_wall_time(), begin, thread_time, wait_time = 0, hash_time = 0, critical_time = 0;
+    double setup_time = get_wall_time(), begin, thread_time, wait_time = 0, hash_time = 0, critical_time = 0, realloc_time = 0, begin2;
     thread_time = get_wall_time();
     int offset = omp_get_thread_num();
     *numThreads = omp_get_num_threads();
@@ -142,7 +142,7 @@ int *numcount(int *x, int n, int m) {
       //printf("Num threads = %d ", numThreads);
       //printf("length = %d ", hashtablelength);
       //printf("\n");
-      //printf("%s \t %s \t %s \t %s \t %s \t %s\n","No","Setup","Wait","Hash","Crit", "Thread");
+      printf("%s \t %s \t %s \t %s \t %s \t %s\n","No","Setup","Wait","Hash","Crit", "Thread");
       //subsequence_arr = (int*) malloc(sizeof(int*)*(*numThreads));
     }
     setup_time = get_wall_time() - setup_time;
@@ -206,7 +206,6 @@ int *numcount(int *x, int n, int m) {
           {
             //reallocate the size
             hashtable[hash32]->array = (int**)realloc( hashtable[hash32]->array , ((hashtable[hash32]->amount)+1)*sizeof(int**) );
-            
             //aquire lock
             omp_set_lock(outputindexlock);
             {
@@ -236,14 +235,14 @@ int *numcount(int *x, int n, int m) {
     } // reached end of array
     //wait for all the threads to finish
     thread_time = get_wall_time() - thread_time;
-    /*
+    
     #pragma omp critical
     { 
-      printf("%d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f\n", offset, 
+      printf("%d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t%.2f\n", offset, 
       setup_time, wait_time,hash_time,
-      critical_time, thread_time);
+      critical_time, realloc_time, thread_time);
     }
-    */
+    
     #pragma omp for
     for(int i = 0; i < *hashtablelength; i++)
     {
