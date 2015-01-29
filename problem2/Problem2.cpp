@@ -98,14 +98,17 @@ void printArraySequence(int* array, int m)
 
 string keyFromArray(int* array,int length);
 
+node* hashtable[268435456];
+
 int *numcount(int *x, int n, int m) {
   // For this version, we will use a map as a global hash table that all threads access.
   // For now, we're using strings as keys for the hashtable. We cannot use an array of ints, which would be ideal,
   // because you must use a constant value as a key - c++ doesn't want you to modify the key while it's in the hash table.
-  int bitsize = ceil(log2(n-m+1));
+  //int bitsize = ceil(log2(n-m+1));
+  int bitsize = 28;
   int hashtablelength = pow(2,bitsize);
   
-  node** hashtable = (node**) malloc(sizeof(node*)*(hashtablelength));
+  //node** hashtable = (node**) malloc(sizeof(node*)*(hashtablelength));
   int *subsequence_arr;
   // Array of locks for individual locking
   omp_lock_t* lock = (omp_lock_t*)malloc(sizeof(omp_lock_t)*(hashtablelength));
