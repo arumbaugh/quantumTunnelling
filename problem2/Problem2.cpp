@@ -129,29 +129,18 @@ int *numcount(int *x, int n, int m) {
   // Start the threads
   #pragma omp parallel //for shared(lock)
   {    
-    double setup_time = get_wall_time(), begin, thread_time, wait_time = 0, hash_time = 0, critical_time = 0, realloc_time = 0, begin2;
     thread_time = get_wall_time();
     int offset = omp_get_thread_num();
     numThreads = omp_get_num_threads();
     int outputindex = 0;
-    #pragma omp single
-    {
-      //printf("Num threads = %d ", numThreads);
-      //printf("length = %d ", hashtablelength);
-      //printf("\n");
-      printf("%s \t %s \t %s \t %s \t %s \t %s\n","No","Setup","Wait","Hash","Crit", "Thread");
-      //subsequence_arr = (int*) malloc(sizeof(int*)*(*numThreads));
-    }
-    setup_time = get_wall_time() - setup_time;
     //subsequence_arr[offset] = 0;
     #pragma omp for
     for(int i = 0 ; i < n-m+1 ; i++) {   
-      // Don't write without starting a critical section
-      begin = get_wall_time();
+
+
       uint32_t hash32 = hash(&x[i],m);
       hash32 = (((hash32>>bitsize) ^ hash32) & TINY_MASK(bitsize));
-      hash_time += get_wall_time() - begin;
-      begin = get_wall_time();
+
  
 
       omp_set_lock(&(lock[hash32]));
@@ -226,20 +215,15 @@ int *numcount(int *x, int n, int m) {
             
           }     
          }
-       critical_time += get_wall_time() - begin;
+
       } // end critical section
       omp_unset_lock(&(lock[hash32]));
 
     } // reached end of array
     //wait for all the threads to finish
-    thread_time = get_wall_time() - thread_time;
+
     
-    #pragma omp critical
-    { 
-      printf("%d \t %.2f \t %.2f \t %.2f \t %.2f \t %.2f \t%.2f\n", offset, 
-      setup_time, wait_time,hash_time,
-      critical_time, realloc_time, thread_time);
-    }
+
     
     /*
     #pragma omp for
