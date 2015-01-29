@@ -129,7 +129,6 @@ int *numcount(int *x, int n, int m) {
   // Start the threads
   #pragma omp parallel //for shared(lock)
   {    
-    thread_time = get_wall_time();
     int offset = omp_get_thread_num();
     numThreads = omp_get_num_threads();
     int outputindex = 0;
@@ -145,8 +144,6 @@ int *numcount(int *x, int n, int m) {
 
       omp_set_lock(&(lock[hash32]));
       {
-         wait_time += get_wall_time()-begin;
-         begin = get_wall_time();
 	 
          //no entry yet for hash
          if(hashtable[hash32] == NULL)
