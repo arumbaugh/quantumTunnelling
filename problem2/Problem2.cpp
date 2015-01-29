@@ -133,7 +133,7 @@ int *numcount(int *x, int n, int m) {
     numThreads = omp_get_num_threads();
     int outputindex = 0;
     //subsequence_arr[offset] = 0;
-    #pragma omp for
+    #pragma omp for schedule(static)
     for(int i = 0 ; i < n-m+1 ; i++) {   
 
 
