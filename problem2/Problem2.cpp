@@ -1,4 +1,3 @@
-// Ryan King
 // I ran this in the CSIF with the following compile command:
 // g++ -fopenmp -o P2.out Problem2.cpp
 
@@ -54,9 +53,7 @@ int compareArray(int* array1, int* array2, int m)
 
 
 int *numcount(int *x, int n, int m) {
-  // For this version, we will use a map as a global hash table that all threads access.
-  // For now, we're using strings as keys for the hashtable. We cannot use an array of ints, which would be ideal,
-  // because you must use a constant value as a key - c++ doesn't want you to modify the key while it's in the hash table.
+
   int* bitsize = (int*)malloc(sizeof(int));
   *bitsize = ceil(log2(n-m+1));
   int* hashtablelength =(int*)malloc(sizeof(int));
